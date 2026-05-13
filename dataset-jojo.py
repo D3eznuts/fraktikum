@@ -4,10 +4,10 @@ import seaborn as sns
 
 df = pd.read_csv('./dataset/jojostandstatsv2.csv', encoding='latin1')
 
-print("Data Awal:")
+print("===== DATA AWAL =====")
 print(df.head())
 
-df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+df = df.apply(lambda col: col.map(lambda x: x.strip() if isinstance(x, str) else x))
 
 rank_map = {
     'A': 5,
@@ -20,39 +20,64 @@ rank_map = {
 cols = ['PWR', 'SPD', 'RNG', 'PER', 'PRC', 'DEV']
 
 for col in cols:
+    print(f"\nValue unik kolom {col}:")
+    print(df[col].unique())
+
+for col in cols:
+    df[col] = df[col].astype(str).str.strip()
     df[col] = df[col].map(rank_map)
 
-print("\nCek nilai null setelah mapping:")
-print(df.isnull().sum())
+print("\n===== NULL SETELAH MAPPING =====")
+print(df[cols].isnull().sum())
 
-df = df.dropna()
+df = df.dropna(subset=cols)
+
+for col in cols:
+    df[col] = df[col].astype(int)
 
 df['Total'] = df[cols].sum(axis=1)
 
 top_stand = df.sort_values(by='Total', ascending=False).head(10)
 
-print("\nTop 10 Stand:")
+print("\n===== TOP 10 STAND =====")
 print(top_stand[['Stand', 'Total']])
 
-plt.figure()
+plt.figure(figsize=(10,6))
+
 plt.barh(top_stand['Stand'], top_stand['Total'])
+
 plt.gca().invert_yaxis()
+
 plt.title('Top 10 Stand Terkuat')
 plt.xlabel('Total Stat')
 plt.ylabel('Stand')
+
 plt.show()
 
-df[cols].hist()
+df[cols].hist(figsize=(12,8))
+
 plt.suptitle('Distribusi Stat')
+
 plt.show()
+
+plt.figure(figsize=(8,6))
 
 correlation = df[cols].corr()
 
-sns.heatmap(correlation, annot=True)
+sns.heatmap(
+    correlation,
+    annot=True,
+    cmap='coolwarm'
+)
+
 plt.title('Korelasi Antar Stat')
+
 plt.show()
 
-special = df[(df['PWR'] >= 4) & (df['SPD'] <= 2)]
+special = df[
+    (df['PWR'] >= 4) &
+    (df['SPD'] <= 2)
+]
 
-print("\nPower tinggi tapi Speed rendah:")
-print(special[['Stand','PWR','SPD']])
+print("\n===== POWER TINGGI TAPI SPEED RENDAH =====")
+print(special[['Stand', 'PWR', 'SPD']])
